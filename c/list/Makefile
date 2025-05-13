@@ -21,6 +21,7 @@ list.o: list.c
 
 test_mem_leak:
 	$(CC) -g -fsanitize=leak main.c list.c -o $(NAME_PRJ)
+	./$(NAME_PRJ)
 
 .PHONY test:
 	./$(NAME_PRJ)
