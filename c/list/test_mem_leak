@@ -1,0 +1,6 @@
+#!/bin/bash
+
+gcc -g -fsanitize=leak main.c list.c -o list_test
+
+./list_test
+
