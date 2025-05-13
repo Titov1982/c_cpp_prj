@@ -3,7 +3,7 @@
 NAME_PRJ = list_test 
 CC = gcc
 CFLAGS = -c -g -Wall 
-LDFLAGS = -o #-fsanitize=laek
+LDFLAGS = -o 
 
 
 all: $(NAME_PRJ)
@@ -19,8 +19,8 @@ list.o: list.c
 	$(CC) $(CFLAGS) list.c 
 
 
-#test_mem_leak:
-#	$(CC) -g -fsanitize=laek main.c list.c -o $(NAME_PRJ)
+test_mem_leak:
+	$(CC) -g -fsanitize=leak main.c list.c -o $(NAME_PRJ)
 
 .PHONY test:
 	./$(NAME_PRJ)

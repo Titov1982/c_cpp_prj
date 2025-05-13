@@ -28,10 +28,10 @@ size_t list_get_len(struct list *list) {
 // Добавить элемент в список
 bool list_add(struct list *list, void *value, size_t value_size) {
     if (list != NULL) {
-        struct node *nd = (struct node*) malloc(sizeof(struct node));
-        if (nd == NULL) return false; // error
-        
         if (value == NULL) return false; // error
+        struct node *nd = (struct node*) malloc(sizeof(struct node));
+        if (nd == NULL) return false; // error 
+        
         void *val = malloc(value_size);
         memcpy(val, value, value_size);
         nd->value = val;
@@ -60,7 +60,6 @@ struct node* list_find_node(struct list *list, void *value) {
     if (list != NULL) {
         struct node *ptr_nd = list->head;
         while (ptr_nd != NULL) {
-            //if (ptr_nd->value == value) {
             if (list->list_cmp_node_func(ptr_nd->value, value)) {
                 return ptr_nd;
             }
