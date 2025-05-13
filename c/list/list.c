@@ -104,7 +104,7 @@ bool list_del(List *self, void *value) {
     return false;
 }
 
-// Очистить список
+// Удалить все элементы списка, но оставить привязку пользовательских методов 
 void list_del_all(List *self) {
     if (self == NULL) return;
     if (self->head == NULL) return;
@@ -121,11 +121,21 @@ void list_del_all(List *self) {
         free(current);
         self->head = NULL;
         self->tail = NULL;
-        //self->list_cmp_node = NULL;
         self->size--;
     }
     return;
 }
+
+
+// Полностью очистить список (с привязкой методов)
+void list_clear(List *self) {
+    if (self == NULL) return;
+    list_del_all(self);
+    self->list_cmp_node = NULL;
+    self->print_list = NULL;
+    return;
+}
+
 
 // Вывести на экран значения всего списка
 void print_list(List *self) {

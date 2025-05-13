@@ -80,14 +80,15 @@ int main(void) {
     printf("List size = %zu\n", list.list_get_len(&list));
     list.print_list(&list);
 
-    char* v = "str_val_10";
+    char* v = "str_val_10"; // найдет
+    //char* v = "b"; // не найдет
     Node nd = {
         .prev = NULL,
         .next = NULL,
         .value = v,
     };
     Node *finded_node = list.list_find_node(&list, nd.value); 
-    print_str(finded_node);
+    if (finded_node != NULL) print_str(finded_node);
 
     list.list_del_all(&list);
     
