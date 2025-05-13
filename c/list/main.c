@@ -37,34 +37,37 @@ void print_int32_t(struct node *ptr_nd) {
 int main(void) {
 
     //srnd();
+    
+    // Создаем список
     struct list list = list_new();
-    list.list_cmp_node_func = eq_node_value_str;
-    list.print_func = print_str;
+    // Устанавливаем функцию сравнения элементов списка
+    list.list_cmp_node = eq_node_value_str;
+    // Устанавливаем функцию печати элементов списка
+    list.print_node = print_str;
 
     char *s1 = "a";
     char *s2 = "b";
     char *s3 = "c";
     char *s4 = "d";
-    if (list_add(&list, s1, strlen(s1) + 1) == false) return 1;
-    if (list_add(&list, s2, strlen(s2) + 1) == false) return 1;
-    if (list_add(&list, s3, strlen(s3) + 1) == false) return 1;
-    if (list_add(&list, s4, strlen(s4) + 1) == false) return 1;
-    printf("List size = %zu\n", list_get_len(&list));
-    list_print(&list);
+    if (list.list_add(&list, s1, strlen(s1) + 1) == false) return 1;
+    if (list.list_add(&list, s2, strlen(s2) + 1) == false) return 1;
+    if (list.list_add(&list, s3, strlen(s3) + 1) == false) return 1;
+    if (list.list_add(&list, s4, strlen(s4) + 1) == false) return 1;
+    printf("List size = %zu\n", list.list_get_len(&list));
+    list.print_list(&list);
     
-    if (list_del(&list, s2) == false) return 1;
-    if (list_del(&list, s4) == false) return 1;
-    printf("List size = %zu\n", list_get_len(&list));
-    list_print(&list);
+    if (list.list_del(&list, s2) == false) return 1;
+    if (list.list_del(&list, s4) == false) return 1;
+    printf("List size = %zu\n", list.list_get_len(&list));
+    list.print_list(&list);
     
     char *s5 = "e";
-    if (list_add(&list, s5, strlen(s5) + 1) == false) return 1;
-    printf("List size = %zu\n", list_get_len(&list));
-    list_print(&list);
+    if (list.list_add(&list, s5, strlen(s5) + 1) == false) return 1;
+    printf("List size = %zu\n", list.list_get_len(&list));
+    list.print_list(&list);
     
-    list_del_all(&list);
-    printf("List size = %zu\n", list_get_len(&list));
-    list_print(&list);
+    list.list_del_all(&list);
+    printf("List size = %zu\n", list.list_get_len(&list));
 
     for (size_t i = 0; i < 15; i++) {
         char buf[16] = "str_val_";
@@ -72,10 +75,11 @@ int main(void) {
         snprintf(b, sizeof(b), "%zu", i);
         strcat(buf, b);
 
-        if (list_add(&list, buf, strlen(buf)) == false) return 1;
+        if (list.list_add(&list, buf, strlen(buf)) == false) return 1;
     }    
-    printf("List size = %zu\n", list_get_len(&list));
-    list_print(&list);
-
+    printf("List size = %zu\n", list.list_get_len(&list));
+    list.print_list(&list);
+    list.list_del_all(&list);
+    
     return 0;
 }

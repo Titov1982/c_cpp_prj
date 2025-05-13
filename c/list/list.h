@@ -7,8 +7,8 @@
 #include <stdbool.h>
 
 
-typedef bool (*list_cmp_node)(void*, void*);
-typedef void (*print_func)(void*) ;
+//typedef bool (*list_cmp_node)(void*, void*);
+//typedef void (*print_func)(void*) ;
 
 // Структура элемента списка
 struct node {
@@ -22,8 +22,18 @@ struct list {
     struct node *tail;
     struct node *head;
     size_t size;
-    bool (*list_cmp_node_func)(void*, void*);
-    void (*print_func)(struct node*);
+
+    // Определяемые пользователем методы (зависят от типа объектов списка)
+    bool (*list_cmp_node)(void*, void*);
+    void (*print_node)(struct node*);
+
+    // Методы списка
+    size_t (*list_get_len)(struct list*);
+    bool (*list_add)(struct list*, void*, size_t); 
+    struct node* (*list_find_node)(struct list*, void*);
+    bool (*list_del)(struct list*, void*);
+    void (*list_del_all)(struct list*);
+    void (*print_list)(struct list*); 
 };
 
 
@@ -40,6 +50,6 @@ bool list_del(struct list *list, void *value);
 // Очистить список
 void list_del_all(struct list *list);
 // Вывести на экран значения всего списка
-void list_print(struct list *list); 
+void print_list(struct list *list); 
 
 #endif

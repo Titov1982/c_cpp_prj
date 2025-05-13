@@ -15,7 +15,17 @@ struct list list_new() {
         .head = NULL,
         .tail = NULL,
         .size = 0,
-        .list_cmp_node_func = NULL,
+
+        .list_cmp_node = NULL,
+        .print_node = NULL,
+
+        .list_get_len = list_get_len,
+        .print_list = print_list,
+        .list_add = list_add,
+        .list_del = list_del,
+        .list_del_all = list_del_all,
+        .list_find_node = list_find_node,
+
     };
     return l;
 }
@@ -60,7 +70,7 @@ struct node* list_find_node(struct list *list, void *value) {
     if (list != NULL) {
         struct node *ptr_nd = list->head;
         while (ptr_nd != NULL) {
-            if (list->list_cmp_node_func(ptr_nd->value, value)) {
+            if (list->list_cmp_node(ptr_nd->value, value)) {
                 return ptr_nd;
             }
             ptr_nd = ptr_nd->next;
@@ -111,24 +121,17 @@ void list_del_all(struct list *list) {
         free(current);
         list->head = NULL;
         list->tail = NULL;
-        list->list_cmp_node_func = NULL;
+        list->list_cmp_node = NULL;
         list->size--;
     }
     return;
 }
 
 // Вывести на экран значения всего списка
-/*void list_print(struct list *list) {
+void print_list(struct list *list) {
     struct node *ptr_nd = list->head;
     for (; ptr_nd != NULL; ptr_nd = ptr_nd->next) {
-        printf("%" PRId32 "\n", *((int32_t*)ptr_nd->value));
-    }
-}
-*/
-void list_print(struct list *list) {
-    struct node *ptr_nd = list->head;
-    for (; ptr_nd != NULL; ptr_nd = ptr_nd->next) {
-        list->print_func(ptr_nd);
+        list->print_node(ptr_nd);
     }
 }
 
