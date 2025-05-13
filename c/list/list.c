@@ -121,7 +121,7 @@ void list_del_all(List *self) {
         free(current);
         self->head = NULL;
         self->tail = NULL;
-        self->list_cmp_node = NULL;
+        //self->list_cmp_node = NULL;
         self->size--;
     }
     return;
