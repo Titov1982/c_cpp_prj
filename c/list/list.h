@@ -35,7 +35,7 @@ size_t list_get_len(struct list *list);
 bool list_add(struct list *list, void *value, size_t value_size); 
 // Получить указатель на элемент списка по его значению
 struct node* list_find_node(struct list *list, void *value);
-// Удалть элемент из списка по значению
+// Удалить элемент из списка по значению
 bool list_del(struct list *list, void *value);
 // Очистить список
 void list_del_all(struct list *list);

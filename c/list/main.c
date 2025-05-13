@@ -1,4 +1,3 @@
-// #include <stdint.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <inttypes.h>
@@ -67,7 +66,16 @@ int main(void) {
     printf("List size = %zu\n", list_get_len(&list));
     list_print(&list);
 
+    for (size_t i = 0; i < 15; i++) {
+        char buf[16] = "str_val_";
+        char b[5] = {0};
+        snprintf(b, sizeof(b), "%zu", i);
+        strcat(buf, b);
 
+        if (list_add(&list, buf, strlen(buf)) == false) return 1;
+    }    
+    printf("List size = %zu\n", list_get_len(&list));
+    list_print(&list);
 
     return 0;
 }
