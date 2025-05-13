@@ -33,6 +33,7 @@ typedef struct list {
     Node* (*list_find_node)(struct list*, void*);
     bool (*list_del)(struct list*, void*);
     void (*list_del_all)(struct list*);
+    void (*list_clear)(struct list*);
     void (*print_list)(struct list*); 
 } List;
 
@@ -47,8 +48,10 @@ bool list_add(List *self, void *value, size_t value_size);
 Node* list_find_node(List *self, void *value);
 // Удалить элемент из списка по значению
 bool list_del(List *self, void *value);
-// Очистить список
+// Удалить все элементы списка, но оставить привязку пользовательских методов 
 void list_del_all(List *self);
+// Полностью очистить список (с привязкой методов)
+void list_clear(List *self); 
 // Вывести на экран значения всего списка
 void print_list(List *self); 
 

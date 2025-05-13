@@ -25,6 +25,7 @@ List list_new() {
         .list_del = list_del,
         .list_del_all = list_del_all,
         .list_find_node = list_find_node,
+        .list_clear = list_clear,
 
     };
     return l;

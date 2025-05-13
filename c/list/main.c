@@ -90,7 +90,8 @@ int main(void) {
     Node *finded_node = list.list_find_node(&list, nd.value); 
     if (finded_node != NULL) print_str(finded_node);
 
-    list.list_del_all(&list);
+    //list.list_del_all(&list);
+    list.list_clear(&list);
     
     return 0;
 }
