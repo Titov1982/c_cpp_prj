@@ -25,11 +25,11 @@ bool eq_node_value_str(void *val1, void *val2) {
     else return false;
 }
 
-void print_str(struct node *ptr_nd) {
+void print_str(Node *ptr_nd) {
     printf("%s\n", (char*) ptr_nd->value);
 }
 
-void print_int32_t(struct node *ptr_nd) {
+void print_int32_t(Node *ptr_nd) {
     printf("%" PRId32 "\n", *((int32_t*)ptr_nd->value));
 }
 
@@ -39,7 +39,7 @@ int main(void) {
     //srnd();
     
     // Создаем список
-    struct list list = list_new();
+    List  list = list_new();
     // Устанавливаем функцию сравнения элементов списка
     list.list_cmp_node = eq_node_value_str;
     // Устанавливаем функцию печати элементов списка

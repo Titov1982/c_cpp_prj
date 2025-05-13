@@ -11,45 +11,45 @@
 //typedef void (*print_func)(void*) ;
 
 // Структура элемента списка
-struct node {
+typedef struct node {
     struct node *prev;
     struct node *next;
     void* value;
-};
+} Node;
 
 // Структура списка
-struct list {
-    struct node *tail;
-    struct node *head;
+typedef struct list {
+    Node *tail;
+    Node *head;
     size_t size;
 
     // Определяемые пользователем методы (зависят от типа объектов списка)
     bool (*list_cmp_node)(void*, void*);
-    void (*print_node)(struct node*);
+    void (*print_node)(Node*);
 
     // Методы списка
     size_t (*list_get_len)(struct list*);
     bool (*list_add)(struct list*, void*, size_t); 
-    struct node* (*list_find_node)(struct list*, void*);
+    Node* (*list_find_node)(struct list*, void*);
     bool (*list_del)(struct list*, void*);
     void (*list_del_all)(struct list*);
     void (*print_list)(struct list*); 
-};
+} List;
 
 
 // Создание нового списка
-struct list list_new();
+List list_new();
 // Получить кол-во элементов в списке
-size_t list_get_len(struct list *list); 
+size_t list_get_len(List *self); 
 // Добавить элемент в список
-bool list_add(struct list *list, void *value, size_t value_size); 
+bool list_add(List *self, void *value, size_t value_size); 
 // Получить указатель на элемент списка по его значению
-struct node* list_find_node(struct list *list, void *value);
+Node* list_find_node(List *self, void *value);
 // Удалить элемент из списка по значению
-bool list_del(struct list *list, void *value);
+bool list_del(List *self, void *value);
 // Очистить список
-void list_del_all(struct list *list);
+void list_del_all(List *self);
 // Вывести на экран значения всего списка
-void print_list(struct list *list); 
+void print_list(List *self); 
 
 #endif
