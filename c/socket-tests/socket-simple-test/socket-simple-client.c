@@ -8,23 +8,48 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
+
+
+int Socket(int domain, int type, int protocol) {
+    int MasterSocket = socket(domain, type, protocol);
+    if (MasterSocket < 0) {
+        perror("[master socket]");
+        return EXIT_FAILURE;
+    }
+    return MasterSocket;
+}
+
+
+int Connect(int* sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+    int res = connect(*sockfd, addr, addrlen);
+    if (res < 0) {
+        perror("[connect]");
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
+
 int main(int argc, char** argv) {
 
-    int Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int ClientSocket = Socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     struct sockaddr_in SockAddr;
     SockAddr.sin_family = AF_INET;
     SockAddr.sin_port = htons(12345);
     SockAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-    connect(Socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
+    // connect(Socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
+    if (0 != Connect(&ClientSocket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr))) {
+        return EXIT_FAILURE;
+    }
 
     char Buffer[] = "PING";
-    send(Socket, Buffer, 4, MSG_NOSIGNAL);
-    recv(Socket, Buffer, 4, MSG_NOSIGNAL);
+    send(ClientSocket, Buffer, 4, MSG_NOSIGNAL);
+    recv(ClientSocket, Buffer, 4, MSG_NOSIGNAL);
 
-    shutdown(Socket, SHUT_RDWR);
-    close(Socket);
+    shutdown(ClientSocket, SHUT_RDWR);
+    close(ClientSocket);
 
     printf("%s\n", Buffer);
 
