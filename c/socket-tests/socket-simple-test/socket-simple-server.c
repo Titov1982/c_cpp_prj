@@ -14,7 +14,7 @@ int Socket(int domain, int type, int protocol) {
     int MasterSocket = socket(domain, type, protocol);
     if (MasterSocket < 0) {
         perror("[master socket]");
-        return EXIT_FAILURE;
+        exit (EXIT_FAILURE);
     }
     return MasterSocket;
 }
@@ -23,6 +23,7 @@ void Bind(int sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     int bind_res = bind(sockfd, addr, addrlen);
     if (bind_res < 0) {
         perror("[bind master socket]");
+        exit(EXIT_FAILURE);
     }
     return;
 }
@@ -31,6 +32,7 @@ void Listen(int sockfd, int backlog) {
     int listen_res = listen(sockfd, backlog);
     if (listen_res < 0) {
         perror("[listen master socket]");
+        exit(EXIT_FAILURE);
     }
     return;
 }
@@ -39,7 +41,7 @@ int Accept(int sockfd, struct sockaddr *addr, socklen_t *addlen) {
     int SlaveSocket = accept(sockfd, addr, addlen);
     if (SlaveSocket < 0) {
         perror("[accept slave socket]");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
     return SlaveSocket;
 }
@@ -60,7 +62,7 @@ int main(int argc, char** argv) {
     }
 
     int MasterSocket = Socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
-    
+
     struct sockaddr_in SockAddr;
     SockAddr.sin_family = AF_INET;
     // SockAddr.sin_port = htons(12345);

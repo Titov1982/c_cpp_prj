@@ -14,19 +14,19 @@ int Socket(int domain, int type, int protocol) {
     int MasterSocket = socket(domain, type, protocol);
     if (MasterSocket < 0) {
         perror("[master socket]");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
     return MasterSocket;
 }
 
 
-int Connect(int* sockfd, const struct sockaddr *addr, socklen_t addrlen) {
+void Connect(int* sockfd, const struct sockaddr *addr, socklen_t addrlen) {
     int res = connect(*sockfd, addr, addrlen);
     if (res < 0) {
         perror("[connect]");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
-    return EXIT_SUCCESS;
+    return;
 }
 
 
@@ -40,9 +40,7 @@ int main(int argc, char** argv) {
     SockAddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
     // connect(Socket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr));
-    if (0 != Connect(&ClientSocket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr))) {
-        return EXIT_FAILURE;
-    }
+    Connect(&ClientSocket, (struct sockaddr *)(&SockAddr), sizeof(SockAddr)); 
 
     char Buffer[] = "PING";
     send(ClientSocket, Buffer, 4, MSG_NOSIGNAL);
