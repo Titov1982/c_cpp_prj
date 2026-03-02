@@ -4,19 +4,22 @@
 
 Интерфейс библиотеки состоит из следующих функций:
 
+```c
 int     darr_create(darr* arr, size_t size_one_elem);   // Создать динамический массив
 int     darr_add(darr* arr, void* elem);                // Добавить элемент
 int     darr_destroy(darr* arr);                        // Уничтожить массив
 int     darr_del(darr* arr, size_t idx);                // Удалить элемент по индексу
 void*   darr_get(darr* arr, size_t idx);                // Прлучить элемент по индексу
+```
 
 Первым параметром все функции принимают указатель на структуру типа darr*:
 
+```c
 typedef struct darr_s {
   size_t size;              // Текущее число элементов в массиве
   size_t cap;               // Емкость массива. Кол-во элементов массива для которых выделена память
   void* arr;                // Указатель на начало массива выделенной памяти
   size_t size_one_elem;     // Размер одного элемента массива
 } darr;
-
+```
 
