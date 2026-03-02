@@ -66,7 +66,7 @@ void darr_print(darr* arr)
  *  0 - ошибок нет
  *  1 - массив уже очищен
  */
-int darr_destroy_array(darr* arr)
+int darr_destroy(darr* arr)
 {
   if (arr->arr != NULL) {
     free((void*)(arr->arr));
@@ -86,7 +86,7 @@ int darr_destroy_array(darr* arr)
  * 2 - ошибка удаления элемента в пустом массиве
  * 3 - ошибка удаления элемента с индексом превышающим массив
  */
-int darr_del_elem(darr* arr, size_t idx)
+int darr_del(darr* arr, size_t idx)
 {
   if (arr->size == 0) return 2;
   if (idx >= arr->size) return 3;

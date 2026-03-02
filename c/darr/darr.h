@@ -9,14 +9,12 @@
  */
 #define DARR_CAPACITY 5
 
-
-// typedef struct darr_s darr;
-// /**
-//  * Структура описывающая динамический массив.
-//  * size - текущее число элементов в массиве
-//  * cap  - емкость массива. Кол-во элементов массива для которых выделена память.
-//  * arr  - указатель на начало массива выделенной памяти
-//  */
+/**
+ * Структура описывающая динамический массив.
+ * size - текущее число элементов в массиве
+ * cap  - емкость массива. Кол-во элементов массива для которых выделена память.
+ * arr  - указатель на начало массива выделенной памяти
+ */
 typedef struct darr_s {
   size_t size;
   size_t cap;
@@ -29,8 +27,8 @@ typedef struct darr_s {
 int   darr_create(darr* arr, size_t size_one_elem);
 int   darr_add(darr* arr, int elem);
 void  darr_print(darr* arr);
-int   darr_destroy_array(darr* arr);
-int   darr_del_elem(darr* arr, size_t idx);
+int   darr_destroy(darr* arr);
+int   darr_del(darr* arr, size_t idx);
 int   darr_get(darr* arr, size_t idx);
 
 

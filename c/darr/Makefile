@@ -2,29 +2,31 @@ CC = gcc
 CFLAGS = -O2 -g -std=gnu17 -Wall -Wextra \
 				 -fsanitize=address
 
-LD = ld
+LD = gcc
+LDFLAGS = -g
 
+TARGET = main
 
-main: main.o darr.o darr.h
+MAIN_C = main.c darr.c
+MAIN_H = darr.h
+MAIN_O = $(MAIN_C: .c=.o)
+
+all: $(TARGET)
+
+include deps.make
+
+main: $(MAIN_O)
 	$(CC) $(CFLAGS) $^ -o $@
 
-main.o: main.c darr.h
-	$(CC) $(CFLAGS) $^ -c $@
+deps.make: $(MAIN_C) $(MAIN_H)
+	$(CC) -MM $(MAIN_C) > deps.make
 
-darr.o: darr.c darr.h
-	$(CC) $(CFLAGS) $^ -c $@
 
-# darr.o: darr.c darr.h
-# 	$(CC) $(CFLAGS) $^ -c $@
-#
-# %.o: %.c darr.h
-# 	$(CC) $(CFLAGS) $^ -c $@
-#
-# %: %.o darr.o darr.h
-# 	$(CC) $(CFLAGS) $^ -o $@
+
 
 .PHONY: clean
 
 clean:
 	-rm -f *.o \
-		*.gch main
+		*.gch $(TARGET) \
+		deps.make
