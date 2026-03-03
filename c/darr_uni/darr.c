@@ -105,6 +105,8 @@ int darr_del(darr* arr, size_t idx)
  */
 void* darr_get(darr* arr, size_t idx)
 {
+  if (arr->arr == NULL) return NULL;
+  if (idx >= arr->size) return NULL;
   return (char*)arr->arr + (idx * arr->size_one_elem);
 }
 
