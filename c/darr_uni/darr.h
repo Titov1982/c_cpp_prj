@@ -30,16 +30,9 @@ typedef struct darr_s {
 
 int     darr_create(darr* arr, size_t size_one_elem);   // Создать динамический массив
 int     darr_add(darr* arr, void* elem);                // Добавить элемент
-int     darr_destroy(darr* arr);                        // Уничтожить массив
 int     darr_del(darr* arr, size_t idx);                // Удалить элемент по индексу
 void*   darr_get(darr* arr, size_t idx);                // Прлучить элемент по индексу
-
-
-
-
-
-
-
+int     darr_destroy(darr* arr);                        // Уничтожить массив
 
 
 #endif

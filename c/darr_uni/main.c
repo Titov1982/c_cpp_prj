@@ -23,7 +23,7 @@ int main(void)
   if (darr_create(&new_arr, sizeof(TYPE_INT)) > 0) return EXIT_FAILURE;
   
   // Емкость и размер нового массива
-  printf("cap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
+  printf("Емкость и размер пустого массива\ncap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
 
   // Заполняем массив значениями  
   for (int i = 0; i < 1500000000; i++) {
@@ -36,8 +36,7 @@ int main(void)
   }
 
   // Емкость и размер наполненного массива
-  printf("cap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
-  printf("-------------\n");
+  printf("Емкость и размер наполненного массива\ncap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
 
   // getchar();
 
@@ -56,9 +55,9 @@ int main(void)
   if (darr_create(&new_arr, sizeof(TYPE_LONG_DOUBLE)) > 0) return EXIT_FAILURE;
   
   // Емкость и размер нового массива
-  printf("cap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
+  printf("Емкость и размер пустого массива\ncap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
   // Заполняем массив значениями  
-  for (size_t i = 0; i < 450000000; i++) {
+  for (size_t i = 0; i < 800000000; i++) {
     TYPE_LONG_DOUBLE buf = (i + 1) * 10; 
     int res = darr_add(&new_arr, &buf);
     if (res == 1) {
@@ -68,8 +67,7 @@ int main(void)
   }
 
   // Емкость и размер наполненного массива
-  printf("cap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
-  printf("-------------\n");
+  printf("Емкость и размер наполненного массива\ncap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
 
   // getchar();
 
@@ -94,7 +92,7 @@ int main(void)
 
   // Емкость и размер опусташенного массива
   printf("-------------\n");
-  printf("cap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
+  printf("Емкость и размер пустого массива\ncap: %zu\tsize: %zu\n", new_arr.cap, new_arr.size);
 
   // Удаляем массив, очищаем память
   darr_destroy(&new_arr);
