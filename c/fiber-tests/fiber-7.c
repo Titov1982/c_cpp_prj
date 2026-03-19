@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <signal.h>
 #include <sys/time.h>
+#include <stdatomic.h>
 
 #define FIBER_NUMBER        5
 #define FIBER_STACK_SIZE    8192
@@ -32,7 +33,7 @@ struct fiber_context_t f_cxt_list[FIBER_NUMBER];
 struct fiber_func_params_t ffps[FIBER_NUMBER];
 
 volatile int cur_context_num = 0;           // Индекс текущей выполняемой нити
-volatile int num_finished_fibers = 0;       // Количество завершённых нитей
+_Atomic int num_finished_fibers = 0;        // Количество завершённых нитей
 struct itimerval timer;                     // Таймер
 
 // Планировщик нитей 
@@ -144,7 +145,7 @@ fiber_function(int idx)
 
     // Помечаем нить как завершённую
     f_cxt_list[idx].finished = 1;
-    __sync_fetch_and_add(&num_finished_fibers, 1);
+    atomic_fetch_add(&num_finished_fibers, 1);
 }
 
 int
