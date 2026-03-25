@@ -136,10 +136,6 @@ void fiber_sched_stop() {
 }
 
 
-// fid_t create_fiber_id() {
-//     fibers__.
-// }
-
 
 
 // Создание волокна (fibre)

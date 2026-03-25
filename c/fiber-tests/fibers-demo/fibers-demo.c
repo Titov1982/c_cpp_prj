@@ -96,14 +96,8 @@ int main() {
     printf("%s:\t[%ld]\n", ffps[i].name, ffps[i].count);
   }
 
-
+  // Освобождаем ресурсы волокон
   fibers_destroy();
-  // // Освобождаем память
-  // for (int i = 0; i < FIBER_NUMBER; i++) {
-  //   free(fibers__.f_cxt_list[i].context.uc_stack.ss_sp);
-  // }
-  // free(fibers__.sched_cxt.context.uc_stack.ss_sp);
-  // free(fibers__.main_cxt.context.uc_stack.ss_sp);
 
   return EXIT_SUCCESS;
 }
