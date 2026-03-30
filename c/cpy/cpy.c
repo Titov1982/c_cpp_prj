@@ -54,9 +54,9 @@ int filter(const struct dirent *entry) {
   return 1;
 }
 
-int get_file_list(char *dir_name, struct dirent **namelist) {
-  // struct dirent** namelist = NULL;
-  int n = scandir(dir_name, &namelist, filter, alphasort);
+// Получаем список файлов копируемой директории
+int get_file_list(char *dir_name, struct dirent ***namelist) {
+  int n = scandir(dir_name, namelist, filter, alphasort);
   if (n == -1) {
     fprintf(stderr, "opendir: %s\n", strerror(errno));
     exit(EXIT_FAILURE);
@@ -81,14 +81,8 @@ void get_file_cp_info(char *path_src, char *path_dst,
 
     p_info->f_cp_type_src = SRC_DIR;
 
-    // struct dirent *ents;
-    // get_file_list(path_src, &ents);
     struct dirent **ents;
-    int n = scandir(path_src, &ents, filter, alphasort);
-    if (n == -1) {
-      fprintf(stderr, "opendir: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
+    int n = get_file_list(path_src, &ents);
     p_info->files_count = n;
     p_info->files_count = n;
     p_info->path_dst_list = calloc(n, sizeof(char *));
