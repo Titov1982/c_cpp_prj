@@ -1,0 +1,321 @@
+
+// #define _GNU_SOURCE
+#define _DEFAULT_SOURCE
+
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <signal.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+// #include "darr.h"
+
+#define BUF_SIZE 1024 * 64 // Размер буфера копирования
+
+char *bar;
+struct winsize ws;
+int effective_term_width;
+
+// struct file_info {
+//   char *f_name;
+//   size_t f_size;
+// };
+
+int filter(const struct dirent *entry) {
+  if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+    return 0;
+  }
+  return 1;
+}
+
+int get_file_list(char *dir_name, struct dirent **namelist) {
+  // struct dirent** namelist = NULL;
+
+  int n = scandir(dir_name, &namelist, filter, alphasort);
+  if (n == -1) {
+    fprintf(stderr, "opendir: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  return n;
+
+  // for (int i = 0; i < n; ++i) {
+  //   printf("%s\n", namelist[i]->d_name);
+  //   free(namelist[i]);
+  // }
+
+  // free(namelist);
+}
+
+// void get_dir(char *dir_name) {
+//   struct dirent **namelist = NULL;
+//   int n;
+//
+//   n = scandir(".", &namelist, filter, alphasort);
+//   if (n == -1) {
+//     fprintf(stderr, "opendir: %s\n", strerror(errno));
+//     exit(EXIT_FAILURE);
+//   }
+//
+//   for (int i = 0; i < n; ++i) {
+//     printf("%s\n", namelist[i]->d_name);
+//     free(namelist[i]);
+//   }
+//
+//   free(namelist);
+// }
+
+// Вывод статуса операции копирования в процентах
+void print_copy_status_in_proc(size_t read_file_size, ssize_t bytes_readed,
+                               char *read_file_path, char *write_file_path) {
+
+  // Расситываем кол-во байт на процент
+  size_t bytes_per_proc = read_file_size / 100;
+  // Выводим индикатор копирования в процентаах
+  printf("\e[?25l"); // Скрыть курсор
+  fflush(stdout);
+  // Если размер файла меньше или равен размеру буфера, то
+  // файл скопируеися за один цикл, сразу устанавливаем значение в 100%,
+  // иначе рассчитываем
+  printf("Copy %s to %s: [%zu %%]\r", read_file_path, write_file_path,
+         read_file_size <= BUF_SIZE ? 100 : bytes_readed / bytes_per_proc);
+  printf("\e[?25h"); // Отобразить курсор
+  fflush(stdout);
+}
+
+// Вывод статуса операции копирования в виде бара
+void print_copy_status_bar(size_t read_file_size, ssize_t bytes_readed,
+                           /*int effective_term_width,*/
+                           [[maybe_unused]] char *read_file_path,
+                           [[maybe_unused]] char *write_file_path) {
+
+  // Расситываем кол-во байт на процент
+  size_t bytes_per_proc = read_file_size / 100;
+  // Расситываем кол-во байт на 10 процентов
+  size_t bytes_per_10_proc = bytes_per_proc * 10;
+  // Рассчитываем кол-во заполненных символов (кол-во символов на каждые 10
+  // процентов)
+  size_t active_bar_symbols_per_10_proc = effective_term_width / 10;
+  // Если кол-во байт в файле меньше, чем байт на процент, то заполняем сразу
+  // все ширину полосы бара
+  size_t active_bar_symbols =
+      (bytes_per_10_proc != 0)
+          ? (bytes_readed / bytes_per_10_proc * active_bar_symbols_per_10_proc)
+          : (effective_term_width);
+
+  for (size_t i = 0; i < active_bar_symbols; ++i) {
+    bar[i] = '|';
+    bar[effective_term_width - 1] = '\0';
+  }
+  for (size_t j = active_bar_symbols; j < sizeof(bar) - 1; ++j) {
+    bar[j] = ' ';
+  }
+
+  printf("\e[?24l"); // Скрыть курсор
+  fflush(stdout);
+
+  // Если размер файла меньше или равен размеру буфера, то
+  // файл скопируеися за один цикл, сразу устанавливаем значение в 100%,
+  // иначе рассчитываем
+  printf("copy: [\033\[32m%s\033\[0m] %zu%%\r", bar,
+         read_file_size <= BUF_SIZE ? 100 : bytes_readed / bytes_per_proc);
+
+  printf("\e[?25h"); // Отобразить курсор
+  fflush(stdout);
+}
+
+void handler([[maybe_unused]] int sig, [[maybe_unused]] siginfo_t *info,
+             [[maybe_unused]] void *uc) {
+  free(bar);
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+  int term_width = ws.ws_col;
+  // Вычитаем кол-во символов "copy: [] 100%"
+  effective_term_width = term_width - 13;
+  // Выделяем память для бара
+  bar = malloc(effective_term_width);
+  memset(bar, ' ', effective_term_width);
+  bar[effective_term_width - 1] = '\0';
+}
+
+int copy_file_(char *read_file_path, char *write_file_path,
+               void (*print_status)(size_t, ssize_t, char *, char *)) {
+  int rfd = open(read_file_path, O_RDONLY, S_IRUSR | S_IRGRP | S_IROTH);
+  if (rfd == -1) {
+    fprintf(stderr, "open read: %s\n", strerror(errno));
+    return 1; // EXIT_FAILURE;
+  }
+  int wfd = open(write_file_path, O_RDWR | O_CREAT | O_TRUNC,
+                 S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
+  if (wfd == -1) {
+    fprintf(stderr, "open write: %s\n", strerror(errno));
+    return 2; // EXIT_FAILURE;
+  }
+  // Получаем размер файла
+  struct stat sb;
+  if (fstat(rfd, &sb) == -1) {
+    fprintf(stderr, "stat read: %s\n", strerror(errno));
+    return 3; // EXIT_FAILURE;
+  }
+  ssize_t read_file_size = sb.st_size;
+
+  // Цикл чтения записи
+  char buf[BUF_SIZE];
+  for (ssize_t bytes_readed = 0; bytes_readed < read_file_size;) {
+    ssize_t readed = read(rfd, buf, sizeof(buf));
+    if (readed == -1) {
+      fprintf(stderr, "read file: %s\n", strerror(errno));
+      return 4; // EXIT_FAILURE;
+    }
+    bytes_readed += readed;
+
+    ssize_t written = write(wfd, buf, readed);
+    if (written == -1) {
+      fprintf(stderr, "write file: %s\n", strerror(errno));
+      return 5; // EXIT_FAILURE;
+    }
+
+    print_status(read_file_size, bytes_readed, NULL, NULL);
+  }
+  printf("\n");
+  close(rfd);
+  close(wfd);
+  return 0;
+}
+
+int main(int argc, char *argv[]) {
+
+  if (argc != 3) {
+    fprintf(stderr, "Необходимо ввести 2 аргумента");
+    return EXIT_FAILURE;
+  }
+
+  struct sigaction sa;
+  sa.sa_sigaction = handler;
+  sigemptyset(&sa.sa_mask);
+  sa.sa_flags = SA_RESTART | SA_SIGINFO;
+
+  if (sigaction(SIGWINCH, &sa, NULL) == -1) {
+    fprintf(stderr, "sigaction: %s\n", strerror(errno));
+    return EXIT_FAILURE;
+  }
+
+  //  Определяем ширину терминала
+  ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+  int term_width = ws.ws_col;
+  // Вычитаем кол-во символов "copy: [] 100%"
+  effective_term_width = term_width - 13;
+  // Выделяем память для бара
+  bar = malloc(effective_term_width);
+  memset(bar, ' ', effective_term_width);
+  bar[effective_term_width - 1] = '\0';
+
+
+  // Получаем информацию о файле или директории, которую надо скопировать
+  struct stat sb;
+  if (lstat(argv[1], &sb) == -1) {
+    fprintf(stderr, "stat read: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+
+
+  // Если копируем директорию целиком
+  if (S_ISDIR(sb.st_mode)) {
+
+    struct dirent **ents = NULL;
+    int n = scandir(argv[1], &ents, filter, alphasort);
+    if (n == -1) {
+      fprintf(stderr, "opendir: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    // Идем по циклю и копируем все файлы в директории
+    for (int i = 0; i < n; ++i) {
+      size_t len_path = strlen(argv[1]);
+
+      // int r = strcmp(&(argv[1][len_path - 1]), "*");
+      // if (r != 0) {
+      //     printf("Error: *");
+      //     return 1;
+      // }
+
+      size_t len_file_name = strlen(ents[i]->d_name);
+      char *src = calloc(len_path + len_file_name + 1, sizeof(char));
+      sprintf(src, "%s%s", argv[1], ents[i]->d_name);
+
+      char *dst = NULL;
+      size_t len_dst = strlen(argv[2]);
+      int res = strcmp(&(argv[2][len_dst - 1]), "/");
+      dst = calloc(len_dst + len_file_name + 3, sizeof(char));
+      if (res != 0) {
+        sprintf(dst, "%s/%s", argv[2], ents[i]->d_name);
+      } else {
+        sprintf(dst, "%s%s", argv[2], ents[i]->d_name);
+      }
+
+      copy_file_(src, dst, print_copy_status_bar);
+
+      free(dst);
+      free(src);
+    }
+
+    for (int i = 0; i < n; ++i) {
+      free(ents[i]);
+    }
+    free(ents);
+    // printf("\n");
+  }
+
+
+
+  // Копирование один файла
+  if (S_ISREG(sb.st_mode)) {
+    char* dst = NULL;
+
+    if (access(argv[2], F_OK) == -1) {
+        open(argv[2], O_RDWR | O_CREAT | O_TRUNC,
+                 S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
+    }
+
+
+    if (lstat(argv[2], &sb) == -1) {
+      fprintf(stderr, "stat rea;d: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    if (S_ISDIR(sb.st_mode)) {
+      char* f_name = strrchr(argv[1], '/');
+      
+      size_t len_f_name = strlen(f_name + 1);
+      size_t len_dst = strlen(argv[2]);
+      int res = strcmp(&(argv[2][len_dst - 1]), "/");
+      dst = calloc(len_dst + len_f_name + 2, sizeof(char));
+      if (res != 0) {
+        argv[2][len_dst - 2] = '\0';
+        sprintf(dst, "%s/%s", argv[2], f_name);
+      } else {
+        sprintf(dst, "%s%s", argv[2], f_name);
+      }
+
+
+    }
+    if (S_ISREG(sb.st_mode)) {
+        dst = argv[2];
+    }
+    copy_file_(argv[1], dst, print_copy_status_bar);
+    printf("\n");
+  }
+
+  if (bar != NULL)
+    free(bar);
+
+  return EXIT_SUCCESS;
+}
