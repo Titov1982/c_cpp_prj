@@ -1,4 +1,11 @@
 
+/**
+ * TODO: 1. Добавить копирование директорий (методом создания новой в цеоевой с прежним названием)
+ *       2. 
+ */
+
+
+
 // #define _GNU_SOURCE
 #define _DEFAULT_SOURCE
 
@@ -16,18 +23,29 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-// #include "darr.h"
-
 #define BUF_SIZE 1024 * 64 // Размер буфера копирования
 
 char *bar;
 struct winsize ws;
-int effective_term_width;
+size_t effective_term_width;
 
-// struct file_info {
-//   char *f_name;
-//   size_t f_size;
-// };
+typedef enum file_cp_type_s {
+  SRC_FILE,
+  SRC_DIR,
+  DST_FILE,
+  DST_DIR,
+} file_cp_type_t;
+
+struct path_cp_info {
+  file_cp_type_t f_cp_type_src;
+  file_cp_type_t f_cp_type_dst;
+  int files_count;
+  char *path_src;
+  char *path_dst;
+  // struct dirent*** entries;
+  char **path_src_list;
+  char **path_dst_list;
+};
 
 int filter(const struct dirent *entry) {
   if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
@@ -38,7 +56,6 @@ int filter(const struct dirent *entry) {
 
 int get_file_list(char *dir_name, struct dirent **namelist) {
   // struct dirent** namelist = NULL;
-
   int n = scandir(dir_name, &namelist, filter, alphasort);
   if (n == -1) {
     fprintf(stderr, "opendir: %s\n", strerror(errno));
@@ -46,32 +63,113 @@ int get_file_list(char *dir_name, struct dirent **namelist) {
   }
 
   return n;
-
-  // for (int i = 0; i < n; ++i) {
-  //   printf("%s\n", namelist[i]->d_name);
-  //   free(namelist[i]);
-  // }
-
-  // free(namelist);
 }
 
-// void get_dir(char *dir_name) {
-//   struct dirent **namelist = NULL;
-//   int n;
-//
-//   n = scandir(".", &namelist, filter, alphasort);
-//   if (n == -1) {
-//     fprintf(stderr, "opendir: %s\n", strerror(errno));
-//     exit(EXIT_FAILURE);
-//   }
-//
-//   for (int i = 0; i < n; ++i) {
-//     printf("%s\n", namelist[i]->d_name);
-//     free(namelist[i]);
-//   }
-//
-//   free(namelist);
-// }
+void get_file_cp_info(char *path_src, char *path_dst,
+                      struct path_cp_info *p_info) {
+
+  struct stat sb;
+
+  // Путь SRC файла или директории
+  if (lstat(path_src, &sb) == -1) {
+    fprintf(stderr, "stat read: %s\n", strerror(errno));
+    exit(EXIT_FAILURE);
+  }
+
+  // SRC это директория, значик копируем все файлы
+  if (S_ISDIR(sb.st_mode)) {
+
+    p_info->f_cp_type_src = SRC_DIR;
+
+    // struct dirent *ents;
+    // get_file_list(path_src, &ents);
+    struct dirent **ents;
+    int n = scandir(path_src, &ents, filter, alphasort);
+    if (n == -1) {
+      fprintf(stderr, "opendir: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+    p_info->files_count = n;
+    p_info->files_count = n;
+    p_info->path_dst_list = calloc(n, sizeof(char *));
+    p_info->path_src_list = calloc(n, sizeof(char *));
+
+    // Идем по циклю и копируем все файлы в директорию
+    for (int i = 0; i < n; ++i) {
+      size_t len_path = strlen(path_src);
+
+      size_t len_file_name = strlen(ents[i]->d_name);
+      char *src = calloc(len_path + len_file_name + 1, sizeof(char));
+      sprintf(src, "%s%s", path_src, ents[i]->d_name);
+
+      char *dst = NULL;
+      size_t len_dst = strlen(path_dst);
+      int res = strcmp(&(path_dst[len_dst - 1]), "/");
+      dst = calloc(len_dst + len_file_name + 3, sizeof(char));
+      if (res != 0) {
+        sprintf(dst, "%s/%s", path_dst, ents[i]->d_name);
+      } else {
+        sprintf(dst, "%s%s", path_dst, ents[i]->d_name);
+      }
+
+      p_info->path_src_list[i] = calloc(strlen(src) + 1, sizeof(char));
+      strcpy(p_info->path_src_list[i], src);
+      p_info->path_dst_list[i] = calloc(strlen(dst) + 1, sizeof(char));
+      strcpy(p_info->path_dst_list[i], dst);
+
+      free(dst);
+      free(src);
+    }
+
+    for (int i = 0; i < n; ++i) {
+      free(ents[i]);
+    }
+    free(ents);
+  }
+
+  // SRC это файл
+  else if (S_ISREG(sb.st_mode)) {
+
+    p_info->f_cp_type_src = SRC_FILE;
+    p_info->path_src = path_src;
+
+    // DST
+    // Проверяем, есть ли файл с именем, в которое хотим скопировать,
+    // если нет, то создаем пустой файл
+    if (access(path_dst, F_OK) == -1) {
+      open(path_dst, O_RDWR | O_CREAT | O_TRUNC,
+           S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
+    }
+    if (lstat(path_dst, &sb) == -1) {
+      fprintf(stderr, "stat read: %s\n", strerror(errno));
+      exit(EXIT_FAILURE);
+    }
+
+    char *dst = NULL;
+
+    if (S_ISREG(sb.st_mode)) {
+      dst = path_dst;
+    }
+
+    if (S_ISDIR(sb.st_mode)) {
+      char *f_name = strrchr(path_src, '/');
+
+      size_t len_f_name = strlen(f_name + 1);
+      size_t len_dst = strlen(path_dst);
+      int res = strcmp(&(path_dst[len_dst - 1]), "/");
+      dst = calloc(len_dst + len_f_name + 2, sizeof(char));
+      if (res != 0) {
+        path_dst[len_dst - 2] = '\0';
+        sprintf(dst, "%s/%s", path_dst, f_name);
+      } else {
+        sprintf(dst, "%s%s", path_dst, f_name);
+      }
+    }
+
+    p_info->f_cp_type_dst = DST_FILE;
+    p_info->path_dst = dst;
+  }
+}
 
 // Вывод статуса операции копирования в процентах
 void print_copy_status_in_proc(size_t read_file_size, ssize_t bytes_readed,
@@ -217,102 +315,29 @@ int main(int argc, char *argv[]) {
   memset(bar, ' ', effective_term_width);
   bar[effective_term_width - 1] = '\0';
 
+  struct path_cp_info p_info = {0};
+  get_file_cp_info(argv[1], argv[2], &p_info);
 
-  // Получаем информацию о файле или директории, которую надо скопировать
-  struct stat sb;
-  if (lstat(argv[1], &sb) == -1) {
-    fprintf(stderr, "stat read: %s\n", strerror(errno));
-    exit(EXIT_FAILURE);
+  if (p_info.f_cp_type_src == SRC_FILE) {
+    if (p_info.f_cp_type_dst == DST_FILE) {
+      copy_file_(p_info.path_src, p_info.path_dst, print_copy_status_bar);
+    } else if (p_info.f_cp_type_dst == DST_DIR) {
+      copy_file_(p_info.path_src, p_info.path_dst, print_copy_status_bar);
+    }
+  } else if (p_info.f_cp_type_src == SRC_DIR) {
+    for (int i = 0; i < p_info.files_count; ++i) {
+      copy_file_(p_info.path_src_list[i], p_info.path_dst_list[i],
+                 print_copy_status_bar);
+    }
   }
 
-
-
-  // Если копируем директорию целиком
-  if (S_ISDIR(sb.st_mode)) {
-
-    struct dirent **ents = NULL;
-    int n = scandir(argv[1], &ents, filter, alphasort);
-    if (n == -1) {
-      fprintf(stderr, "opendir: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-
-    // Идем по циклю и копируем все файлы в директории
-    for (int i = 0; i < n; ++i) {
-      size_t len_path = strlen(argv[1]);
-
-      // int r = strcmp(&(argv[1][len_path - 1]), "*");
-      // if (r != 0) {
-      //     printf("Error: *");
-      //     return 1;
-      // }
-
-      size_t len_file_name = strlen(ents[i]->d_name);
-      char *src = calloc(len_path + len_file_name + 1, sizeof(char));
-      sprintf(src, "%s%s", argv[1], ents[i]->d_name);
-
-      char *dst = NULL;
-      size_t len_dst = strlen(argv[2]);
-      int res = strcmp(&(argv[2][len_dst - 1]), "/");
-      dst = calloc(len_dst + len_file_name + 3, sizeof(char));
-      if (res != 0) {
-        sprintf(dst, "%s/%s", argv[2], ents[i]->d_name);
-      } else {
-        sprintf(dst, "%s%s", argv[2], ents[i]->d_name);
-      }
-
-      copy_file_(src, dst, print_copy_status_bar);
-
-      free(dst);
-      free(src);
-    }
-
-    for (int i = 0; i < n; ++i) {
-      free(ents[i]);
-    }
-    free(ents);
-    // printf("\n");
+  // Освобождаем память
+  for (int i = 0; i < p_info.files_count; ++i) {
+      free(p_info.path_src_list[i]);
+      free(p_info.path_dst_list[i]);
   }
-
-
-
-  // Копирование один файла
-  if (S_ISREG(sb.st_mode)) {
-    char* dst = NULL;
-
-    if (access(argv[2], F_OK) == -1) {
-        open(argv[2], O_RDWR | O_CREAT | O_TRUNC,
-                 S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR | S_IWGRP | S_IWOTH);
-    }
-
-
-    if (lstat(argv[2], &sb) == -1) {
-      fprintf(stderr, "stat rea;d: %s\n", strerror(errno));
-      exit(EXIT_FAILURE);
-    }
-
-    if (S_ISDIR(sb.st_mode)) {
-      char* f_name = strrchr(argv[1], '/');
-      
-      size_t len_f_name = strlen(f_name + 1);
-      size_t len_dst = strlen(argv[2]);
-      int res = strcmp(&(argv[2][len_dst - 1]), "/");
-      dst = calloc(len_dst + len_f_name + 2, sizeof(char));
-      if (res != 0) {
-        argv[2][len_dst - 2] = '\0';
-        sprintf(dst, "%s/%s", argv[2], f_name);
-      } else {
-        sprintf(dst, "%s%s", argv[2], f_name);
-      }
-
-
-    }
-    if (S_ISREG(sb.st_mode)) {
-        dst = argv[2];
-    }
-    copy_file_(argv[1], dst, print_copy_status_bar);
-    printf("\n");
-  }
+  free(p_info.path_src_list);
+  free(p_info.path_dst_list);
 
   if (bar != NULL)
     free(bar);
